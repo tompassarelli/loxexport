@@ -1,0 +1,16 @@
+user stories:
+
+
+when extractContactData is fired.. .
+
+
+1. For a person with contact info already available, 
+we determine this case (mail-button), THEN click on the mail-button, 
+khllhhTHEN capture email info
+
+2. For a person that with no contact info present 
+(fetch contact info appears on the person card), 
+we determine this case, THEN click fetch contact
+- If after clicking fetch contact, 
+there is mail-button, do 1. ELSE: continue.
+

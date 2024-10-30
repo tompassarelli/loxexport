@@ -1,0 +1,141 @@
+story:
+
+a recruiter wants to be able to activate a program that will begin scraping
+the current page and subsequent pages after executing a search query. 
+
+Decisions to make:
+1. desktop application, web extension, or script injected into browser
+considerations: the search result page is a paginated SPA,
+- [x] --> script: because the page does not refresh, a script can work
+- desktop app: can use puppeteer to control browser, can run in background
+
+loxo bot:
+
+project setup
+- [x] create a puppeteer/node project
+- [x] move this todofile to that project
+
+grab jira code 
+adapt jira code to
+- get selectable collection of contacts
+- for each el in collection
+-- click fetch contacts
+-- extract contact data and other data into in memory structure
+
+async function activateCheckboxesAndNavigate() {
+    // Function to handle checkbox activation
+    async function activateHiddenCheckboxesInPersonCards() {
+        const tamResultsContainer = document.querySelector('[data-tour="tam-results"]');
+        if (!tamResultsContainer) {
+            console.error('No container with data-tour="tam-results" found!');
+            return;
+        }
+        const personCards = tamResultsContainer.querySelectorAll('[class^="PersonCardContainer-"]');
+
+        // Click all checkboxes without delay between clicks
+        for (const card of personCards) {
+            const hiddenCheckbox = card.querySelector('input[type="checkbox"]');
+            if (hiddenCheckbox && !hiddenCheckbox.checked) {
+                hiddenCheckbox.click();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for click to register
+            }
+        }
+    }
+
+    // Function to process current page
+    async function processCurrentPage() {
+        await activateHiddenCheckboxesInPersonCards();
+
+        // Select the next page button based on the <i> element inside it with specific classes
+        const nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
+        const nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
+
+        if (nextPageButton && !nextPageButton.disabled) {
+            nextPageButton.click();
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Delay before processing the next page
+            await processCurrentPage(); // Recursively call to process the next page
+        } else {
+            console.log('Completed processing all pages.');
+        }
+    }
+
+    // Start processing from the first page
+    await processCurrentPage();
+}
+
+// Start the entire process
+activateCheckboxesAndNavigate();
+
+-------
+
+
+
+
+async function extractContactData() {
+    // Function to extract data from a single card
+    function extractCardData(card) {
+        const querySelector = (selector) => card.querySelector(`[class^="${selector}"]`);
+        const querySelectorAll = (selector) => card.querySelectorAll(`[class^="${selector}"]`);
+
+        const name = querySelector('PersonCardName')?.textContent.trim();
+        const jobTitle = querySelector('PersonCardJobTitle')?.textContent.trim();
+        const location = querySelector('PersonCardLocation')?.textContent.trim();
+        
+        const experience = Array.from(querySelectorAll('PersonCardJobItem__Container')).map(job => ({
+            title: job.querySelector('[class^="PersonCardJobItem__Title"]')?.textContent.trim(),
+            company: job.querySelector('[class^="PersonCardJobItem__InfoArea"]')?.childNodes[1]?.textContent.trim(),
+            duration: job.querySelector('.Deemphasize-sc-v6rre4-0')?.textContent.trim()
+        }));
+        
+        const education = Array.from(querySelectorAll('PersonCardEducationItem__Container')).map(edu => ({
+            institution: edu.querySelector('[class^="PersonCardEducationItem__InstitutionName"]')?.textContent.trim(),
+            degree: edu.querySelector('[class^="PersonCardEducationItem__InfoArea"] span:not(.Deemphasize-sc-v6rre4-0)')?.textContent.trim(),
+            duration: edu.querySelector('.Deemphasize-sc-v6rre4-0')?.textContent.trim()
+        }));
+        
+        const skillsContainer = Array.from(querySelectorAll('PersonCardBadgesSection__Container')).find(el => el.textContent.includes('Skills'));
+        const skills = skillsContainer ? Array.from(skillsContainer.querySelectorAll('[class^="PersonCardBadgesSection__StyledBadge"]')).map(skill => skill.textContent.trim()) : [];
+        
+        const tagsContainer = Array.from(querySelectorAll('PersonCardBadgesSection__Container')).find(el => el.textContent.includes('Tags'));
+        const tags = tagsContainer ? Array.from(tagsContainer.querySelectorAll('[class^="PersonCardBadgesSection__StyledBadge"]')).map(tag => tag.textContent.trim()) : [];
+
+        return { name, jobTitle, location, experience, education, skills, tags };
+    }
+
+    // Function to process current page
+    async function processCurrentPage() {
+        const tamResultsContainer = document.querySelector('[data-tour="tam-results"]');
+        if (!tamResultsContainer) {
+            console.error('No container with data-tour="tam-results" found!');
+            return [];
+        }
+        const personCards = tamResultsContainer.querySelectorAll('[class^="PersonCardContainer-"]');
+
+        const extractedData = [];
+        for (const card of personCards) {
+            extractedData.push(extractCardData(card));
+        }
+
+        // Select the next page button based on the <i> element inside it with specific classes
+        const nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
+        const nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
+
+        if (nextPageButton && !nextPageButton.disabled) {
+            nextPageButton.click();
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Delay before processing the next page
+            return extractedData.concat(await processCurrentPage()); // Recursively call to process the next page
+        } else {
+            console.log('Completed processing all pages.');
+            return extractedData;
+        }
+    }
+
+    // Start processing from the first page
+    const allExtractedData = await processCurrentPage();
+    console.log('Extracted data:', allExtractedData);
+    return allExtractedData;
+}
+
+// Start the entire process
+extractContactData();
+
