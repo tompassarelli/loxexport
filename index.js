@@ -40,8 +40,10 @@ async function extractContactData(cardLimit = null) {
       }
 
       let allExtractedData = [];
+      let hasMorePages = true;
 
-      async function processCurrentPage() {
+      // Iterative approach using while loop instead of recursion
+      while (hasMorePages && (!cardLimit || allExtractedData.length < cardLimit)) {
           const personCards = tamResultsContainer.querySelectorAll('[class^="PersonCardContainer-"]');
           const cardsToProcess = cardLimit ? Math.min(cardLimit - allExtractedData.length, personCards.length) : personCards.length;
 
@@ -51,7 +53,7 @@ async function extractContactData(cardLimit = null) {
               const contactButton = card.querySelector('[class*="PersonCardContactButtons__ContactButtonInner"]');
               if (contactButton) {
                   contactButton.click();
-                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  await new Promise(resolve => setTimeout(resolve, 700));
               }
           }
 
@@ -68,7 +70,7 @@ async function extractContactData(cardLimit = null) {
               const btnAnchor = wrapper.querySelector('[class*="Dropdown__AnchorContainer"]');
               if (btnAnchor) {
                   btnAnchor.click();
-                  await new Promise(resolve => setTimeout(resolve, 1500));
+                  await new Promise(resolve => setTimeout(resolve, 500));
               } else {
                   console.log('Current person card processing has no email, skipping email extract');
                   allExtractedData.push(cardData);
@@ -104,20 +106,19 @@ async function extractContactData(cardLimit = null) {
               }
           }
 
-          // Select the next page button based on the <i> element inside it with specific classes
+          // Check for next page
           let nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
           let nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
 
           if (nextPageButton && !nextPageButton.disabled) {
               nextPageButton.click();
-              await new Promise(resolve => setTimeout(resolve, 5000)); // Delay before processing the next page
-              await processCurrentPage(); // Recursively call to process the next page
+              await new Promise(resolve => setTimeout(resolve, 10000)); // Delay before processing the next page
           } else {
+              hasMorePages = false;
               console.log('Completed processing all pages.');
           }
       }
 
-      await processCurrentPage();
       return allExtractedData;
   }
 
