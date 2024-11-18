@@ -28,8 +28,11 @@ async function extractContactData(cardLimit = null) {
       const specialtiesContainer = badgeSections.find(el => el.textContent.includes('Specialties'));
       const specialties = specialtiesContainer ? Array.from(specialtiesContainer.querySelectorAll('[class*="PersonCardBadgesSection__StyledBadge"]')).map(specialty => specialty.textContent.trim()) : [];
 
-      return { name, jobTitle, location, experience, education, skills, specialties, emails: [] };
+      return { name, jobTitle, location, experience, education, skills, specialties, personalEmail: '', workEmail: '' };
   }
+
+  // Remove toast notifications from appearing on the page
+  document.querySelector('[class*="toaster_ToastWrapper"]').remove();
 
   // Phase 1: Click all contact buttons first
   async function initiateContactFetch() {
@@ -53,12 +56,12 @@ async function extractContactData(cardLimit = null) {
               const contactButton = card.querySelector('[class*="PersonCardContactButtons__ContactButtonInner"]');
               if (contactButton) {
                   contactButton.click();
-                  await new Promise(resolve => setTimeout(resolve, 700));
+                  await new Promise(resolve => setTimeout(resolve, 1100));
               }
           }
 
           // Wait for all contact info to load
-          await new Promise(resolve => setTimeout(resolve, 8000));
+          await new Promise(resolve => setTimeout(resolve, 15000));
 
           // Second loop: Extract all data from current page
           for (let i = 0; i < cardsToProcess; i++) {
@@ -70,7 +73,7 @@ async function extractContactData(cardLimit = null) {
               const btnAnchor = wrapper.querySelector('[class*="Dropdown__AnchorContainer"]');
               if (btnAnchor) {
                   btnAnchor.click();
-                  await new Promise(resolve => setTimeout(resolve, 500));
+                  await new Promise(resolve => setTimeout(resolve, 1100));
               } else {
                   console.log('Current person card processing has no email, skipping email extract');
                   allExtractedData.push(cardData);
@@ -81,17 +84,25 @@ async function extractContactData(cardLimit = null) {
               const dropdownContainer = document.querySelector('[class*="Dropdown__InternalContainer"]');
               if (dropdownContainer && dropdownContainer.children) {
                   try {
-                      cardData.emails = Array.from(dropdownContainer.children).map(row => {
+                      const emailRows = Array.from(dropdownContainer.children);
+                      for (const row of emailRows) {
                           const addressElement = row.querySelector('div > span > div > div:first-child');
                           const typeElement = row.querySelector('div > span > div > div:last-child');
-                          return {
-                              address: addressElement ? addressElement.textContent.trim() : '',
-                              type: typeElement ? typeElement.textContent.trim() : ''
-                          };
-                      }).filter(email => email.address); // Only keep emails with non-empty addresses
+                          const emailAddress = addressElement ? addressElement.textContent.trim() : '';
+                          const emailType = typeElement ? typeElement.textContent.trim().toLowerCase() : '';
+                          
+                          if (emailAddress) {
+                              if (emailType.includes('work')) {
+                                  cardData.workEmail = emailAddress;
+                              } else if (emailType.includes('personal')) {
+                                  cardData.personalEmail = emailAddress;
+                              }
+                          }
+                      }
                   } catch (error) {
                       console.error('Error extracting email data:', error);
-                      cardData.emails = [];
+                  } finally {
+                      console.log('Email extraction complete');
                   }
               } else {
                   cardData.emails = [];
@@ -102,7 +113,7 @@ async function extractContactData(cardLimit = null) {
               const cloneButton = dropdownContainer?.querySelector('.fa-clone');
               if (cloneButton && dropdownContainer) {
                   cloneButton.click();
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise(resolve => setTimeout(resolve, 1100));
               }
           }
 
@@ -138,7 +149,8 @@ async function extractContactData(cardLimit = null) {
       'Location',
       'Skills',
       'Specialties',
-      'Emails',
+      'Personal Email',
+      'Work Email',
       'Current Title',
       'Current Company',
       'Current Duration',
@@ -165,7 +177,8 @@ async function extractContactData(cardLimit = null) {
         person.location || '',
         person.skills.join('; '),
         person.specialties.join('; '),
-        person.emails.map(e => `${e.address} (${e.type})`).join('; '),
+        person.personalEmail || '',
+        person.workEmail || '',
         currentRole.title || '',
         currentRole.company || '',
         currentRole.duration || '',
