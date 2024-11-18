@@ -32,7 +32,7 @@ async function extractContactData(cardLimit = null) {
   }
 
   // Remove toast notifications from appearing on the page
-  document.querySelector('[class*="toaster_ToastWrapper"]').remove();
+  document.querySelector('[class*="toaster__ToastWrapper"]').remove();
 
   // Phase 1: Click all contact buttons first
   async function initiateContactFetch() {
