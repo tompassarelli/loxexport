@@ -1,4 +1,4 @@
-async function extractContactData(cardLimit = null) {
+async function extractContactData(cardLimit = null, paginateOnly = true) {
   // Function to extract data from a single card
   function extractCardData(card) {
       const querySelector = (selector) => card.querySelector(`[class*="${selector}"]`);
@@ -42,8 +42,30 @@ async function extractContactData(cardLimit = null) {
           return [];
       }
 
+      // Add new helper function for pagination
+      async function clickNextPage() {
+          const nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
+          const nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
+          
+          if (nextPageButton && !nextPageButton.disabled) {
+              nextPageButton.click();
+              await new Promise(resolve => setTimeout(resolve, 10000));
+              return true;
+          }
+          return false;
+      }
+
       let allExtractedData = [];
       let hasMorePages = true;
+
+      // If paginateOnly is true, just click through all pages without extracting data
+      if (paginateOnly) {
+          while (hasMorePages) {
+              hasMorePages = await clickNextPage();
+          }
+          console.log('Pagination test completed');
+          return [];
+      }
 
       // Iterative approach using while loop instead of recursion
       while (hasMorePages && (!cardLimit || allExtractedData.length < cardLimit)) {
@@ -117,15 +139,9 @@ async function extractContactData(cardLimit = null) {
               }
           }
 
-          // Check for next page
-          let nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
-          let nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
-
-          if (nextPageButton && !nextPageButton.disabled) {
-              nextPageButton.click();
-              await new Promise(resolve => setTimeout(resolve, 10000)); // Delay before processing the next page
-          } else {
-              hasMorePages = false;
+          // Check for next page and navigate if possible
+          hasMorePages = await clickNextPage();
+          if (!hasMorePages) {
               console.log('Completed processing all pages.');
           }
       }
