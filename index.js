@@ -1,4 +1,4 @@
-async function extractContactData(cardLimit = null, paginateOnly = true) {
+async function extractContactData(cardLimit = null, paginateOnly = false) {
   // Function to extract data from a single card
   function extractCardData(card) {
       const querySelector = (selector) => card.querySelector(`[class*="${selector}"]`);
