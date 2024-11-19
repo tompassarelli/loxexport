@@ -211,16 +211,14 @@ async function extractContactData(cardLimit = null, paginateOnly = true) {
       `"${(cell || '').toString().replace(/"/g, '""')}"`
     ).join(',')).join('\n');
     
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    // Create and trigger download using data URL instead of Blob
+    const csvData = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
+    link.setAttribute('href', csvData);
     link.setAttribute('download', 'contacts_export.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   });
   
   document.body.appendChild(exportButton);
