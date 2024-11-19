@@ -44,20 +44,11 @@ async function extractContactData(cardLimit = null, paginateOnly = true) {
 
       // Add new helper function for pagination
       async function clickNextPage() {
-          const nextPageButtonIcon = document.querySelector('button i.fa.fa-caret-right.fa-lg');
-          const nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
+          const nextPageButton = document.querySelector('._8y7hx9b > button:nth-child(4)');
           
           if (nextPageButton && !nextPageButton.disabled) {
               try {
-                  // Try multiple click methods
-                  nextPageButton.dispatchEvent(new MouseEvent('click', {
-                      view: window,
-                      bubbles: true,
-                      cancelable: true
-                  }));
-                  // Or alternatively:
-                  // nextPageButton.dispatchEvent(new Event('click', { bubbles: true }));
-                  
+                  nextPageButton.click();
                   await new Promise(resolve => setTimeout(resolve, 10000));
                   return true;
               } catch (error) {
