@@ -48,9 +48,22 @@ async function extractContactData(cardLimit = null, paginateOnly = true) {
           const nextPageButton = nextPageButtonIcon ? nextPageButtonIcon.closest('button') : null;
           
           if (nextPageButton && !nextPageButton.disabled) {
-              nextPageButton.click();
-              await new Promise(resolve => setTimeout(resolve, 10000));
-              return true;
+              try {
+                  // Try multiple click methods
+                  nextPageButton.dispatchEvent(new MouseEvent('click', {
+                      view: window,
+                      bubbles: true,
+                      cancelable: true
+                  }));
+                  // Or alternatively:
+                  // nextPageButton.dispatchEvent(new Event('click', { bubbles: true }));
+                  
+                  await new Promise(resolve => setTimeout(resolve, 10000));
+                  return true;
+              } catch (error) {
+                  console.error('Click failed:', error);
+                  return false;
+              }
           }
           return false;
       }
