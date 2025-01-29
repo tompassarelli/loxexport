@@ -77,14 +77,17 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
           const cardsToProcess = cardLimit ? Math.min(cardLimit - allExtractedData.length, personCards.length) : personCards.length;
 
           // First loop: Click all contact buttons on current page
+          console.log(`Starting contact button clicks for ${cardsToProcess} cards...`);
           for (let i = 0; i < cardsToProcess; i++) {
               const card = personCards[i];
               const contactButton = card.querySelector('[class*="PersonCardContactButtons__ContactButtonInner"]');
               if (contactButton) {
+                  console.log(`Clicking contact button ${i + 1}/${cardsToProcess}`);
                   contactButton.click();
                   await new Promise(resolve => setTimeout(resolve, 1100));
               }
           }
+          console.log('Finished clicking contact buttons, waiting for data load...');
 
           // Wait for all contact info to load
           await new Promise(resolve => setTimeout(resolve, 15000));
