@@ -83,8 +83,9 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
               const contactButton = card.querySelector('[class*="PersonCardContactButtons__ContactButtonInner"]');
               if (contactButton) {
                   console.log(`Clicking contact button ${i + 1}/${cardsToProcess}`);
-                  contactButton.click();
-                  await new Promise(resolve => setTimeout(resolve, 1100));
+                  // Click the fetch contact button async
+                  setTimeout(() => contactButton.click(), 0);
+                  await new Promise(resolve => setTimeout(resolve, 500));
               }
           }
           console.log('Finished clicking contact buttons, waiting for data load...');
@@ -234,6 +235,6 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
 
 // Usage examples:
 // Extract all cards across all pages:
-extractContactData();
+extractContactData(3);
 // Extract only first 3 cards (like before):
 // extractContactData(3);
