@@ -1,4 +1,7 @@
 async function extractContactData(cardLimit = null, paginateOnly = false) {
+  // Remove toast notifications from appearing on the page
+  document.querySelector('[class*="toaster__ToastWrapper"]').remove();
+
   // Function to extract data from a single card
   function extractCardData(card) {
       const querySelector = (selector) => card.querySelector(`[class*="${selector}"]`);
@@ -31,11 +34,8 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
       return { name, jobTitle, location, experience, education, skills, specialties, personalEmail: '', workEmail: '' };
   }
 
-  // Remove toast notifications from appearing on the page
-  document.querySelector('[class*="toaster__ToastWrapper"]').remove();
-
-  // Phase 1: Click all contact buttons first
   async function initiateContactFetch() {
+      // start with grabbing the container for all cards
       const tamResultsContainer = document.querySelector('[data-tour="tam-results"]');
       if (!tamResultsContainer) {
           console.error('No container with data-tour="tam-results" found!');
@@ -103,7 +103,21 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
               const btnAnchor = wrapper.querySelector('[class*="Dropdown__AnchorContainer"]');
               if (btnAnchor) {
                   btnAnchor.click();
-                  await new Promise(resolve => setTimeout(resolve, 1100));
+                  // Wait for dropdown to appear
+                  await new Promise(resolve => {
+                      const checkDropdown = setInterval(() => {
+                          const dropdown = document.querySelector('[class*="Dropdown__InternalContainer"]');
+                          if (dropdown) {
+                              clearInterval(checkDropdown);
+                              resolve();
+                          }
+                      }, 100);
+                      // Timeout after 5 seconds
+                      setTimeout(() => {
+                          clearInterval(checkDropdown);
+                          resolve();
+                      }, 5000);
+                  });
               } else {
                   console.log('Current person card processing has no email, skipping email extract');
                   allExtractedData.push(cardData);
@@ -139,11 +153,25 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
               }
               allExtractedData.push(cardData);
 
-              // Close the email modal
+              // close the email modal
               const cloneButton = dropdownContainer?.querySelector('.fa-clone');
               if (cloneButton && dropdownContainer) {
                   cloneButton.click();
-                  await new Promise(resolve => setTimeout(resolve, 1100));
+                  // Wait for dropdown to disappear
+                  await new Promise(resolve => {
+                      const checkDropdownClosed = setInterval(() => {
+                          const dropdown = document.querySelector('[class*="Dropdown__InternalContainer"]');
+                          if (!dropdown) {
+                              clearInterval(checkDropdownClosed);
+                              resolve();
+                          }
+                      }, 100);
+                      // Timeout after 5 seconds
+                      setTimeout(() => {
+                          clearInterval(checkDropdownClosed);
+                          resolve();
+                      }, 5000);
+                  });
               }
           }
 
@@ -235,6 +263,6 @@ async function extractContactData(cardLimit = null, paginateOnly = false) {
 
 // Usage examples:
 // Extract all cards across all pages:
-extractContactData(3);
-// Extract only first 3 cards (like before):
+extractContactData();
+// Extract only first 3 cards
 // extractContactData(3);
